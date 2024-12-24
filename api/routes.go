@@ -4,8 +4,10 @@ import (
 	"net/http"
 )
 
-func SetupRoutes() {
-	http.HandleFunc("GET /", homeHandler)
-	http.HandleFunc("PUT /occupied", setOccupiedHandler)
-	http.HandleFunc("GET /occupied", getOccupiedHandler)
+func SetupRoutes(mux *http.ServeMux) http.Handler {
+	mux.HandleFunc("GET /", homeHandler)
+	mux.HandleFunc("PUT /occupied", setOccupiedHandler)
+	mux.HandleFunc("GET /occupied", getOccupiedHandler)
+
+	return loggingMiddleware(mux)
 }

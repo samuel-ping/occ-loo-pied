@@ -15,10 +15,11 @@ func main() {
 		port = "3333" // default port
 	}
 
-	api.SetupRoutes()
+	mux := http.NewServeMux()
+	configuredMux := api.SetupRoutes(mux)
 
 	fmt.Printf("Starting server on port %s\n", port)
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
+	if err := http.ListenAndServe(":"+port, configuredMux); err != nil {
 		log.Fatal(err)
 	}
 }
