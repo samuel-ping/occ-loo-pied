@@ -9,5 +9,5 @@ func SetupRoutes(mux *http.ServeMux) http.Handler {
 	mux.HandleFunc("PUT /occupied", setOccupiedHandler)
 	mux.HandleFunc("GET /occupied", getOccupiedHandler)
 
-	return loggingMiddleware(mux)
+	return addLogging(addCorsHeaders(mux))
 }
