@@ -22,3 +22,14 @@ I will create either a webpage or a widget that Max can easily view. This way he
 
 ### Button
 To determine whether or not the bathroom is occupied, there will be a physical button in front of the bathroom door. When pressed, it will send an API request to the server to update the bathroom occupancy status. It will also light up when the bathroom is occupied!
+
+## Stack
+Software: Svelte/Golang/Docker
+Hardware: C++
+
+## Development Setup
+### Server
+To run the go server, run `go run cmd/main.go`
+
+### Client
+To run the Svelte site, run `npm run dev`
