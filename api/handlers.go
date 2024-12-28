@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 )
 
 var bathroomOccupied bool
-
-type Bathroom struct {
-	Occupied bool `json:"occupied"`
-}
+var occupiedStartTime *time.Time
 
 func homeHandler(w http.ResponseWriter, _ *http.Request) {
 	var homeText string
@@ -22,28 +20,30 @@ func homeHandler(w http.ResponseWriter, _ *http.Request) {
 	fmt.Fprintf(w, homeText)
 }
 
+func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(getOccupiedResponse{
+		Occupied:          bathroomOccupied,
+		OccupiedStartTime: occupiedStartTime,
+	})
+}
+
 func setOccupiedHandler(w http.ResponseWriter, r *http.Request) {
-	var occupiedReq Bathroom
-	err := json.NewDecoder(r.Body).Decode(&occupiedReq)
+	var req setOccupiedRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
-	bathroomOccupied = occupiedReq.Occupied
-
-	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/json")
-}
-
-func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
-	body, err := json.Marshal(map[string]bool{"occupied": bathroomOccupied})
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-		return
+	bathroomOccupied = req.Occupied
+	if bathroomOccupied {
+		startTime := time.Now()
+		occupiedStartTime = &startTime
+	} else {
+		occupiedStartTime = nil
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Header().Set("Content-Type", "text/json")
-	w.Write(body)
 }
