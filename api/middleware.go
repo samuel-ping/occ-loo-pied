@@ -24,15 +24,20 @@ func addCorsHeaders(next http.Handler) http.Handler {
 			// If it is, allow CORS.
 			if validOrigin {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
-				w.Header().Set("Access-Control-Allow-Methods", "POST")
+				w.Header().Set("Access-Control-Allow-Methods", "GET,PUT")
 				w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length")
 			}
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
 			next.ServeHTTP(w, r)
 		},
 	)
 }
 
 func validateOrigin(origin string) bool {
-	log.Println("origin:" + origin)
 	return origin == "http://localhost:5173" || origin == "http://192.168.0.12:3333"
 }
