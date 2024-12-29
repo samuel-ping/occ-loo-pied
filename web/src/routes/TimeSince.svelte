@@ -20,15 +20,7 @@
 </script>
 
 <span>
-	(
-	{#if timeSince.hours != 0}
-		{timeSince.hours} h
-	{/if}
-	{#if timeSince.minutes != 0}
-		{timeSince.minutes} m
-	{/if}
-	{#if timeSince.seconds != 0}
-		{timeSince.seconds} s
-	{/if}
-	ago)
+	&#40;{#if timeSince.hours != 0}{timeSince.hours}h&nbsp;
+	{/if}{#if timeSince.minutes != 0}{timeSince.minutes}m&nbsp;
+	{/if}{#if timeSince.seconds != 0}{timeSince.seconds}s&nbsp;{/if}ago&#41;
 </span>
