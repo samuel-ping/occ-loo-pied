@@ -2,7 +2,7 @@ package api
 
 import "time"
 
-type getOccupiedResponse struct {
+type occupiedResponse struct {
 	Occupied          bool       `json:"occupied"`
 	OccupiedStartTime *time.Time `json:"occupiedStartTime,omitempty"`
 }

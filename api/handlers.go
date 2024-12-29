@@ -13,20 +13,22 @@ var occupiedStartTime *time.Time
 func homeHandler(w http.ResponseWriter, _ *http.Request) {
 	var homeText string
 	if bathroomOccupied {
-		homeText = "Bathroom is currently occupied 🚽"
+		homeText = fmt.Sprintf("Bathroom is currently occupied 🚽 (as of %s)", occupiedStartTime)
 	} else {
 		homeText = "Bathroom is not occupied 😀"
 	}
-	fmt.Fprintf(w, homeText)
+	fmt.Fprint(w, homeText)
 }
 
 func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(getOccupiedResponse{
-		Occupied:          bathroomOccupied,
-		OccupiedStartTime: occupiedStartTime,
-	})
+	json.NewEncoder(w).Encode(
+		occupiedResponse{
+			Occupied:          bathroomOccupied,
+			OccupiedStartTime: occupiedStartTime,
+		},
+	)
 }
 
 func setOccupiedHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,4 +48,10 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		occupiedResponse{
+			Occupied:          bathroomOccupied,
+			OccupiedStartTime: occupiedStartTime,
+		},
+	)
 }

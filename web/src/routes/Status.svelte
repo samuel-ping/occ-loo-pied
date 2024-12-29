@@ -1,9 +1,12 @@
 <script lang="ts">
+	import TimeSince from './TimeSince.svelte';
+
 	interface Props {
 		occupied: boolean;
+		occupiedStartTime: Date;
 	}
 
-	let { occupied }: Props = $props();
+	let { occupied, occupiedStartTime }: Props = $props();
 </script>
 
 <h2 class="text-2xl">bathroom is</h2>
@@ -15,3 +18,10 @@
 		vacant
 	{/if}
 </h1>
+
+{#if occupied}
+	<span class="flex flex-row">
+		as of {occupiedStartTime.toLocaleTimeString()}
+		<TimeSince {occupiedStartTime} />
+	</span>
+{/if}

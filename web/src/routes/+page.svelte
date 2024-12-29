@@ -1,52 +1,25 @@
 <script lang="ts">
-	import { dev } from '$app/environment';
-
 	import { onMount } from 'svelte';
 
 	import Status from './Status.svelte';
 	import Toggle from './Toggle.svelte';
-
-	const URL: string = dev ? 'http://localhost:3333/occupied' : 'http://192.168.0.12:3333/occupied';
+	import * as Utils from '$lib/utils';
 
 	let occupied: boolean = $state(false);
+	let occupiedStartTime: Date = $state(new Date());
 
-	interface getOccupiedResponse {
-		occupied: boolean;
-		occupiedStartTime?: string;
-	}
-
-	async function getOccupied(): Promise<getOccupiedResponse> {
-		const res = await fetch(URL);
-		if (!res.ok) {
-			throw new Error(`Response status: ${res.status}`);
-		}
-
-		const json = await res.json();
-		return {
-			occupied: json.occupied,
-			occupiedStartTime: json.occupiedStartTime
-		};
-	}
-
-	async function toggleOccupied(): Promise<void> {
-		await fetch(URL, {
-			method: 'PUT',
-			body: JSON.stringify({ occupied: !occupied })
-		});
-	}
-
-	let data;
-	onMount(async () => {
-		data = await getOccupied();
+	async function toggleOccupied() {
+		let data = await Utils.toggleOccupied(occupied);
 		occupied = data.occupied;
+		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
+	}
+
+	onMount(async () => {
+		let data = await Utils.getOccupied();
+		occupied = data.occupied;
+		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 	});
 </script>
 
-<Status {occupied} />
-<Toggle
-	checked={occupied}
-	onToggle={() => {
-		toggleOccupied();
-		occupied = !occupied;
-	}}
-/>
+<Status {occupied} {occupiedStartTime} />
+<Toggle checked={occupied} onToggle={toggleOccupied} />
