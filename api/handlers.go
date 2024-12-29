@@ -2,23 +2,12 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 )
 
 var bathroomOccupied bool
 var occupiedStartTime *time.Time
-
-func homeHandler(w http.ResponseWriter, _ *http.Request) {
-	var homeText string
-	if bathroomOccupied {
-		homeText = fmt.Sprintf("Bathroom is currently occupied 🚽 (as of %s)", occupiedStartTime)
-	} else {
-		homeText = "Bathroom is not occupied 😀"
-	}
-	fmt.Fprint(w, homeText)
-}
 
 func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/json")
