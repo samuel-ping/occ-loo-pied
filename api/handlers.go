@@ -2,22 +2,20 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/samuel-ping/occ-loo-pied/web"
 )
 
 var bathroomOccupied bool
 var occupiedStartTime *time.Time
 
-func homeHandler(w http.ResponseWriter, _ *http.Request) {
-	var homeText string
-	if bathroomOccupied {
-		homeText = fmt.Sprintf("Bathroom is currently occupied 🚽 (as of %s)", occupiedStartTime)
-	} else {
-		homeText = "Bathroom is not occupied 😀"
-	}
-	fmt.Fprint(w, homeText)
+func homeHandler() http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.FileServer(http.FS(web.GetSvelteFs())).ServeHTTP(w, r)
+	})
 }
 
 func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
