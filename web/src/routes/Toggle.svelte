@@ -7,13 +7,18 @@
 	let { checked, onToggle }: Props = $props();
 </script>
 
-<div class="flex items-center justify-center">
-	<!-- Source: https://www.creative-tim.com/twcomponents/component/toggle-switches -->
-	<label class="relative inline-flex cursor-pointer items-center">
-		<input id="switch" type="checkbox" {checked} onchange={onToggle} class="peer sr-only" />
-		<label for="switch" class="hidden"></label>
-		<div
-			class="peer h-6 w-11 rounded-full border bg-slate-200 after:absolute after:left-[2px] after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:ring-green-300"
-		></div>
+<!-- Source: https://www.material-tailwind.com/docs/html/switch -->
+<div class="relative inline-block h-5 w-11">
+	<input
+		{checked}
+		onchange={onToggle}
+		id="switch-component"
+		type="checkbox"
+		class="peer h-5 w-11 cursor-pointer appearance-none rounded-full bg-slate-100 transition-colors duration-300 checked:bg-slate-800"
+	/>
+	<label
+		for="switch-component"
+		class="absolute left-0 top-0 h-5 w-5 cursor-pointer rounded-full border border-slate-300 bg-white shadow-sm transition-transform duration-300 peer-checked:translate-x-6 peer-checked:border-slate-800"
+	>
 	</label>
 </div>
