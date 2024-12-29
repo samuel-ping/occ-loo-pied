@@ -3,6 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
+	"strings"
 )
 
 func addLogging(next http.Handler) http.Handler {
@@ -39,5 +40,11 @@ func addCorsHeaders(next http.Handler) http.Handler {
 }
 
 func validateOrigin(origin string) bool {
-	return origin == "http://localhost:5173" || origin == "http://192.168.0.12:3333"
+	// Client running locally
+	if strings.Index(origin, "http://localhost:") == 0 {
+		return true
+	}
+
+	// Client running in prod
+	return origin == "http://192.168.0.12:3333"
 }
