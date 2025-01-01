@@ -2,8 +2,7 @@
 	import { onMount } from 'svelte';
 
 	import * as Utils from '$lib/utils';
-
-	const INTERVAL_MS = 1000; // 1000ms = 1s
+	import { ONE_SECOND } from '$lib/constants';
 
 	interface Props {
 		occupiedStartTime: Date;
@@ -15,7 +14,7 @@
 	onMount(() => {
 		setInterval(() => {
 			timeSince = Utils.timeSince(occupiedStartTime);
-		}, INTERVAL_MS);
+		}, ONE_SECOND);
 	});
 </script>
 

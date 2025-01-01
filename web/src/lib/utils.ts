@@ -1,6 +1,4 @@
-import { dev } from '$app/environment';
-
-const URL: string = dev ? 'http://localhost:3333/occupied' : 'http://192.168.0.12:3333/occupied';
+import { API_URL } from "./constants";
 
 interface occupiedResponse {
     occupied: boolean;
@@ -8,7 +6,7 @@ interface occupiedResponse {
 }
 
 export async function getOccupied(): Promise<occupiedResponse> {
-    const res = await fetch(URL);
+    const res = await fetch(API_URL);
     if (!res.ok) {
         throw new Error(`Response status: ${res.status}`);
     }
@@ -21,7 +19,7 @@ export async function getOccupied(): Promise<occupiedResponse> {
 }
 
 export async function toggleOccupied(occupied: boolean): Promise<occupiedResponse> {
-    const res = await fetch(URL, {
+    const res = await fetch(API_URL, {
         method: 'PUT',
         body: JSON.stringify({ occupied: !occupied })
     });

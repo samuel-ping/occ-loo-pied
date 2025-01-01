@@ -4,6 +4,7 @@
 	import Status from './Status.svelte';
 	import Toggle from './Toggle.svelte';
 	import * as Utils from '$lib/utils';
+	import { ONE_SECOND } from '$lib/constants';
 
 	let occupied: boolean = $state(false);
 	let occupiedStartTime: Date = $state(new Date());
@@ -14,10 +15,15 @@
 		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 	}
 
-	onMount(async () => {
-		let data = await Utils.getOccupied();
-		occupied = data.occupied;
-		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
+	onMount(() => {
+		// Poll server every second
+		setInterval(async () => {
+			let data = await Utils.getOccupied();
+			if (occupied != data.occupied) {
+				occupied = data.occupied;
+				occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
+			}
+		}, ONE_SECOND);
 	});
 </script>
 
