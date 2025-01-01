@@ -20,7 +20,7 @@
 		// Poll server every second
 		setInterval(async () => {
 			let data = await Utils.getOccupied();
-			if (occupied != data.occupied) {
+			if (occupied != data.occupied || occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()) {
 				occupied = data.occupied;
 				occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 			}
