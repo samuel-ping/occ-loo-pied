@@ -6,6 +6,7 @@
 	import * as Utils from '$lib/utils';
 	import { ONE_SECOND } from '$lib/constants';
 
+	let isLoadingInitialState: boolean = $state(true);
 	let occupied: boolean = $state(false);
 	let occupiedStartTime: Date = $state(new Date());
 
@@ -23,15 +24,25 @@
 				occupied = data.occupied;
 				occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 			}
+			// Show loading state once on initial page load
+			if (isLoadingInitialState) {
+				isLoadingInitialState = false;
+			}
 		}, ONE_SECOND);
 	});
 </script>
 
 <div
-	class="flex h-full flex-col items-center justify-center gap-2 transition-all {occupied
+	class="flex h-full w-full flex-col items-center justify-center gap-2 {occupied
 		? 'bg-red-400'
-		: 'bg-emerald-500'}"
+		: 'bg-emerald-500'} transition-all"
 >
-	<Status {occupied} {occupiedStartTime} />
-	<Toggle checked={occupied} onToggle={toggleOccupied} />
+	{#if isLoadingInitialState}
+		<span class="text-3xl">Checking bathroom...</span>
+	{:else}
+		<div class="flex h-full w-full flex-col items-center justify-center">
+			<Status {occupied} {occupiedStartTime} />
+			<Toggle checked={occupied} onToggle={toggleOccupied} />
+		</div>
+	{/if}
 </div>
