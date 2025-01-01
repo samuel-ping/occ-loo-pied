@@ -9,7 +9,7 @@
 	let { occupied, occupiedStartTime }: Props = $props();
 </script>
 
-<div class="flex flex-col items-center justify-center">
+<div class="flex flex-col items-center justify-center gap-2">
 	<h2 class="text-3xl">bathroom is</h2>
 
 	<h1 class="text-6xl">

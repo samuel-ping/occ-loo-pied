@@ -33,14 +33,14 @@
 </script>
 
 <div
-	class="flex h-full w-full flex-col items-center justify-center gap-2 {occupied
+	class="flex h-full w-full flex-col items-center justify-center {occupied
 		? 'bg-red-400'
 		: 'bg-emerald-500'} transition-all"
 >
 	{#if isLoadingInitialState}
 		<span class="text-3xl">Checking bathroom...</span>
 	{:else}
-		<div class="flex h-full w-full flex-col items-center justify-center">
+		<div class="flex h-full w-full flex-col items-center justify-center gap-2">
 			<Status {occupied} {occupiedStartTime} />
 			<Toggle checked={occupied} onToggle={toggleOccupied} />
 		</div>
