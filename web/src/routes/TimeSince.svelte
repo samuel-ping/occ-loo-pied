@@ -11,6 +11,10 @@
 	let { occupiedStartTime }: Props = $props();
 	let timeSince: Utils.timeSince = $state({ hours: 0, minutes: 0, seconds: 0 });
 
+	onMount(()=> {
+		timeSince = Utils.timeSince(occupiedStartTime);
+	})
+
 	onMount(() => {
 		setInterval(() => {
 			timeSince = Utils.timeSince(occupiedStartTime);
