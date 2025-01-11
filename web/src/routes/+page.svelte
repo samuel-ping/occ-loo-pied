@@ -16,6 +16,15 @@
 		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 	}
 
+	onMount(async ()=> {
+		let data = await Utils.getOccupied();
+		if (occupied != data.occupied || occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()) {
+			occupied = data.occupied;
+			occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
+		}
+		isLoadingInitialState = false;
+	})
+
 	onMount(() => {
 		// Poll server every second
 		setInterval(async () => {
@@ -23,10 +32,6 @@
 			if (occupied != data.occupied || occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()) {
 				occupied = data.occupied;
 				occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
-			}
-			// Show loading state once on initial page load
-			if (isLoadingInitialState) {
-				isLoadingInitialState = false;
 			}
 		}, ONE_SECOND);
 	});
@@ -38,7 +43,7 @@
 		: 'bg-emerald-500'} transition-all"
 >
 	{#if isLoadingInitialState}
-		<span class="text-3xl">Checking bathroom...</span>
+		<span></span>
 	{:else}
 		<div class="flex h-full w-full flex-col items-center justify-center gap-2">
 			<Status {occupied} {occupiedStartTime} />
