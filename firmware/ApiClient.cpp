@@ -6,10 +6,12 @@
 
 const char* API_URL = "http://bath.room/occupied";
 
+HTTPClient http;
+
 ApiClient::ApiClient() {}
 
 bool ApiClient::isOccupied() {
-  String payload = makeGetRequest();
+  String payload = getOccupiedRequest();
 
   StaticJsonDocument<32> doc;
   DeserializationError error = deserializeJson(doc, payload);
@@ -22,13 +24,12 @@ bool ApiClient::isOccupied() {
   return doc["occupied"];
 }
 
-String ApiClient::makeGetRequest() {
+String ApiClient::getOccupiedRequest() {
   WiFiClient client;
-  HTTPClient http;
   http.begin(client, API_URL);
   
   int httpResponseCode = http.GET();
-  Serial.print("HTTP Response code: ");
+  Serial.print("GET response code: ");
   Serial.println(httpResponseCode);
   String payload = http.getString();
   Serial.println(payload);  
@@ -36,4 +37,24 @@ String ApiClient::makeGetRequest() {
   http.end();
 
   return payload;
+}
+
+void ApiClient::setOccupiedRequest(bool occupied) {
+  JsonDocument doc;
+  doc["occupied"] = occupied;
+  char payload[24];
+  serializeJson(doc, payload);
+
+  WiFiClient client;
+  http.begin(client, API_URL);
+
+  http.addHeader("Content-Type", "text/json");
+
+  Serial.print("PUT payload: ");
+  Serial.println(payload);
+  int httpResponseCode = http.PUT(payload);
+  Serial.print("PUT response code: ");
+  Serial.println(httpResponseCode);
+
+  http.end();
 }

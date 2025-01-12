@@ -1,40 +1,63 @@
+#include <Adafruit_NeoPixel.h>
 #include <ESP8266WiFi.h>
 
 #include "ApiClient.h"
 #include "arduino_secrets.h"
 
+#define TOUCH_PIN D5
+#define LED_PIN D6
+
+const int NUM_PIXELS = 16;
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(NUM_PIXELS, LED_PIN, NEO_GRB + NEO_KHZ800);
+const uint32_t COLOR = strip.Color(255, 0, 0);
+
 const int DELAY = 1000;
 ApiClient apiClient;
 
+int isTouched = 0; // if TTP223 is on
+bool occupied = false;
+
 void setup() {
   Serial.begin(9600);
+
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(TOUCH_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  strip.begin();
 
   WiFi.begin(SECRET_SSID, SECRET_PASSWORD);
-  Serial.println("Connecting");
-
+  
+  Serial.print("Connecting");
   while(WiFi.status() != WL_CONNECTED) {
     delay(DELAY);
     Serial.print(".");
   }
 
-  Serial.println("");
-  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.print("Wifi connected with IP Address: ");
   Serial.println(WiFi.localIP());
 }
 
 void loop() {
-   if(WiFi.status() == WL_CONNECTED) {
-      bool occupied = apiClient.isOccupied();
-      if(occupied) {
-        digitalWrite(LED_BUILTIN, LOW);
-      } else {
-        digitalWrite(LED_BUILTIN, HIGH);
+  if(WiFi.status() == WL_CONNECTED) {
+    if(digitalRead(TOUCH_PIN) == HIGH) {
+      strip.fill(COLOR, 0, NUM_PIXELS);
+
+      if(!occupied) {
+        apiClient.setOccupiedRequest(true);
+        occupied = true;
       }
     } else {
-      Serial.println("WiFi Disconnected");
+      strip.clear();
+      if(occupied) {
+        apiClient.setOccupiedRequest(false);
+        occupied = false;
+      }
     }
-
-    delay(DELAY);
+  } else {
+    Serial.println("Wifi disconnected");
+  }
+  
+  strip.show();
+  delay(DELAY);
 }
 
