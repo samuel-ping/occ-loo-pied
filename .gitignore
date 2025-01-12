@@ -1,0 +1,7 @@
+# web
+node_modules
+.svelte-kit
+build
+
+# firmware
+arduino_secrets.h
