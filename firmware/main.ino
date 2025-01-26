@@ -13,12 +13,9 @@ const uint32_t COLOR_RED = strip.Color(200, 40, 85);
 const uint32_t COLOR_GREEN = strip.Color(50, 168, 82);
 const int BRIGHTNESS = 2; // (255 max)
 
-
 static unsigned long builtinLedLastToggle = 0;
 
-const int DELAY = 1000;
-unsigned long lastPollTime = 0;
-const unsigned long POLL_INTERVAL = 1000;  // Poll every 1 second
+const int DELAY = 100;
 ApiClient apiClient;
 
 int touchState = 0;  // if TTP223 is on
@@ -38,14 +35,7 @@ void setup() {
 
 void loop() {
   if (WiFi.status() == WL_CONNECTED) {
-
-    // Poll status
-    if (millis() - lastPollTime > POLL_INTERVAL) {
-      lastPollTime = millis();
-      occupied = apiClient.isOccupied();
-    }
-
-    // Handle touch button
+    // Handle button presses
     if (digitalRead(TOUCH_PIN) == HIGH) {
       if (!occupied) {
         apiClient.setOccupiedRequest(true);
