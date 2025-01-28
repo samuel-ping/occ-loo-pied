@@ -1,4 +1,12 @@
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
 import { API_URL } from "./constants";
+
+/* This was added by default from shadcn */
+export function cn(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
+}
 
 interface occupiedResponse {
     occupied: boolean;
