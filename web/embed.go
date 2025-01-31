@@ -6,7 +6,8 @@ import (
 	"log"
 )
 
-//go:embed build/*
+//go:generate npm run build
+//go:embed all:build
 var clientFs embed.FS
 
 func GetSvelteFs() fs.FS {

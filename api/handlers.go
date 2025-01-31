@@ -2,8 +2,12 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/samuel-ping/occ-loo-pied/internal/db"
@@ -16,7 +20,17 @@ var occupiedStartTime *time.Time
 
 func homeHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.FileServer(http.FS(web.GetSvelteFs())).ServeHTTP(w, r)
+		// source: https://www.liip.ch/en/blog/embed-sveltekit-into-a-go-binary
+		fs := http.FS(web.GetSvelteFs())
+
+		path := strings.TrimPrefix(r.URL.Path, "/")
+		_, err := fs.Open(path)
+		if errors.Is(err, os.ErrNotExist) {
+			path = fmt.Sprintf("%s.html", path)
+		}
+		r.URL.Path = path
+
+		http.FileServer(fs).ServeHTTP(w, r)
 	})
 }
 

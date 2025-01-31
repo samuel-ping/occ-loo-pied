@@ -9,7 +9,12 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
+// For docker compose
 const MONGODB_URI = "mongodb://root:password@db:27017"
+
+// For local development
+// const MONGODB_URI = "mongodb://root:password@localhost:27017"
+
 const DB = "occloopied"
 const COLLECTION = "metrics"
 
@@ -23,11 +28,14 @@ func ConnectMongo() (*mongo.Client, error) {
 }
 
 func AddOccupiedMetric(client *mongo.Client, startTime *time.Time, endTime *time.Time) error {
+	duration := endTime.Sub(*startTime)
+
 	_, err := client.Database(DB).Collection(COLLECTION).InsertOne(
 		context.Background(),
 		map[string]interface{}{
 			"startTime": startTime,
 			"endTime":   endTime,
+			"duration":  duration,
 		},
 	)
 	if err != nil {

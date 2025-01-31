@@ -7,8 +7,6 @@ import (
 )
 
 func SetupRoutes(mux *http.ServeMux, client *mongo.Client) http.Handler {
-	mux.Handle("GET /", homeHandler())
-
 	mux.HandleFunc("PUT /api/occupied", func(w http.ResponseWriter, r *http.Request) {
 		setOccupiedHandler(w, r, client)
 	})
@@ -17,6 +15,8 @@ func SetupRoutes(mux *http.ServeMux, client *mongo.Client) http.Handler {
 	mux.HandleFunc("GET /api/metrics", func(w http.ResponseWriter, r *http.Request) {
 		getMetricsHandler(w, r, client)
 	})
+
+	mux.Handle("GET /", homeHandler())
 
 	return addLogging(addCorsHeaders(mux))
 }
