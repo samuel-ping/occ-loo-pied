@@ -1,6 +1,8 @@
 package db
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	START_TIME_FIELD = "startTime"
@@ -8,6 +10,8 @@ const (
 )
 
 type Metric struct {
-	StartTime *time.Time `json:"startTime"`
-	EndTime   *time.Time `json:"endTime"`
+	Id        string         `json:"_id"`
+	StartTime *time.Time     `json:"startTime"`
+	EndTime   *time.Time     `json:"endTime"`
+	Duration  *time.Duration `json:"duration,omitempty"`
 }

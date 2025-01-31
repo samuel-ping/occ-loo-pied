@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 
 	import Status from './Status.svelte';
-	import Toggle from './Toggle.svelte';
+	import Toggle from '$lib/Toggle.svelte';
 	import * as Utils from '$lib/utils';
 	import { ONE_SECOND } from '$lib/constants';
 
@@ -16,20 +16,26 @@
 		occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 	}
 
-	onMount(async ()=> {
+	onMount(async () => {
 		let data = await Utils.getOccupied();
-		if (occupied != data.occupied || occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()) {
+		if (
+			occupied != data.occupied ||
+			occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()
+		) {
 			occupied = data.occupied;
 			occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 		}
 		isLoadingInitialState = false;
-	})
+	});
 
 	onMount(() => {
 		// Poll server every second
 		setInterval(async () => {
 			let data = await Utils.getOccupied();
-			if (occupied != data.occupied || occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()) {
+			if (
+				occupied != data.occupied ||
+				occupiedStartTime.getTime() != data.occupiedStartTime?.getTime()
+			) {
 				occupied = data.occupied;
 				occupiedStartTime = data.occupiedStartTime ? data.occupiedStartTime : new Date();
 			}
@@ -47,7 +53,7 @@
 	{:else}
 		<div class="flex h-full w-full flex-col items-center justify-center gap-2">
 			<Status {occupied} {occupiedStartTime} />
-			<Toggle checked={occupied} onToggle={toggleOccupied} />
+			<Toggle disabled={true} checked={occupied} onToggle={toggleOccupied} />
 		</div>
 	{/if}
 </div>

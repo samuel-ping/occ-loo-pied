@@ -1,12 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { OCCUPIED_API_URL, METRICS_API_URL } from "./constants";
 
-import { API_URL } from "./constants";
-
-/* This was added by default from shadcn */
-export function cn(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
 
 interface occupiedResponse {
     occupied: boolean;
@@ -14,7 +7,7 @@ interface occupiedResponse {
 }
 
 export async function getOccupied(): Promise<occupiedResponse> {
-    const res = await fetch(API_URL);
+    const res = await fetch(OCCUPIED_API_URL);
     if (!res.ok) {
         throw new Error(`Response status: ${res.status}`);
     }
@@ -27,7 +20,7 @@ export async function getOccupied(): Promise<occupiedResponse> {
 }
 
 export async function toggleOccupied(occupied: boolean): Promise<occupiedResponse> {
-    const res = await fetch(API_URL, {
+    const res = await fetch(OCCUPIED_API_URL, {
         method: 'PUT',
         body: JSON.stringify({ occupied: !occupied })
     });
@@ -39,14 +32,43 @@ export async function toggleOccupied(occupied: boolean): Promise<occupiedRespons
     }
 }
 
+interface metricsResponse {
+    metrics: metric[]
+}
+
+export interface metric {
+    id: string;
+    startTime: Date;
+    endTime: Date;
+    duration: timeSince;
+}
+
+export async function getMetrics(): Promise<metricsResponse> {
+    const res = await fetch(METRICS_API_URL)
+    if (!res.ok) {
+        throw new Error(`Response status: ${res.status}`);
+    }
+
+    const json = await res.json();
+    return {
+        metrics: json.metrics.map((m: any) => ({
+            _id: m._id,
+            startTime: new Date(m.startTime),
+            endTime: new Date(m.endTime),
+            duration: nanosecondsToTimeSince(m.duration)
+        }))
+    }
+}
+
 export interface timeSince {
     hours: number;
     minutes: number;
     seconds: number;
+    milliseconds: number;
 }
 
 /**
- * Calculates the amount of time that has passed since thenDate in hours, minutes, and seconds.
+ * Calculates time elapsed since thenDate in hours, minutes, and seconds.
  * @param thenDate the date to calculate the time since from
  * @returns the amount of time since the input date in hours, minutes, and seconds
  */
@@ -60,6 +82,24 @@ export function timeSince(thenDate: Date): timeSince {
     return {
         hours: timeSinceDate.getHours() - 19, // I don't know why but its showing 19 hours more for some reason but I'll figure it out later
         minutes: timeSinceDate.getMinutes(),
-        seconds: timeSinceDate.getSeconds()
+        seconds: timeSinceDate.getSeconds(),
+        milliseconds: timeSinceDate.getUTCMilliseconds() // usually isn't used
     }
+}
+
+/**
+ * Converts time elapsed in nanoseconds to hours, minutes, and seconds.
+ * @param duration time elapsed in nanoseconds
+ * @returns time elapsed in hours, minutes, and seconds
+ */
+function nanosecondsToTimeSince(duration: number): timeSince {
+    const milliseconds = duration / 1e6;
+    const date = new Date(milliseconds);
+
+    return {
+        hours: date.getUTCHours(),
+        minutes: date.getUTCMinutes(),
+        seconds: date.getUTCSeconds(),
+        milliseconds: date.getUTCMilliseconds()
+    };
 }

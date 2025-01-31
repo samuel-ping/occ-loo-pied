@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import TimeSinceDisplay from '$lib/TimeSinceDisplay.svelte';
 	import * as Utils from '$lib/utils';
 	import { ONE_SECOND } from '$lib/constants';
 
@@ -9,11 +10,11 @@
 	}
 
 	let { occupiedStartTime }: Props = $props();
-	let timeSince: Utils.timeSince = $state({ hours: 0, minutes: 0, seconds: 0 });
+	let timeSince: Utils.timeSince = $state({ hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
 
-	onMount(()=> {
+	onMount(() => {
 		timeSince = Utils.timeSince(occupiedStartTime);
-	})
+	});
 
 	onMount(() => {
 		setInterval(() => {
@@ -22,8 +23,4 @@
 	});
 </script>
 
-<span>
-	&#40;{#if timeSince.hours != 0}{timeSince.hours}h&nbsp;
-	{/if}{#if timeSince.minutes != 0}{timeSince.minutes}m&nbsp;
-	{/if}{#if timeSince.seconds != 0}{timeSince.seconds}s&nbsp;{/if}ago&#41;
-</span>
+&#40;<TimeSinceDisplay {timeSince} />ago&#41;
