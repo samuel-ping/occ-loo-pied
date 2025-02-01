@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -47,17 +48,35 @@ func AddOccupiedMetric(client *mongo.Client, startTime *time.Time, endTime *time
 
 func GetAllMetrics(client *mongo.Client) ([]Metric, error) {
 	filter := bson.D{}
-	sort := bson.D{{Key: START_TIME_FIELD, Value: 1}}
+	sort := bson.D{{Key: START_TIME_FIELD, Value: -1}}
 	opts := options.Find().SetSort(sort)
-	findResult, err := client.Database(DB).Collection(COLLECTION).Find(context.Background(), filter, opts)
+	cursor, err := client.Database(DB).Collection(COLLECTION).Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
 	}
 
 	var metrics []Metric
-	if err = findResult.All(context.Background(), &metrics); err != nil {
+	if err = cursor.All(context.Background(), &metrics); err != nil {
 		return nil, err
 	}
 
 	return metrics, nil
+}
+
+func DeleteMetric(client *mongo.Client, id string) (bool, error) {
+	objectId, err := bson.ObjectIDFromHex(id)
+	if err != nil {
+		log.Printf("error converting id to objectId: %v\n", err)
+	}
+
+	filter := bson.D{{Key: ID_FIELD, Value: objectId}}
+	res, err := client.Database(DB).Collection(COLLECTION).DeleteOne(context.Background(), filter)
+	if err != nil {
+		return false, err
+	}
+
+	if res.DeletedCount == 0 {
+		return false, nil
+	}
+	return true, nil
 }

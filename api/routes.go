@@ -16,6 +16,10 @@ func SetupRoutes(mux *http.ServeMux, client *mongo.Client) http.Handler {
 		getMetricsHandler(w, r, client)
 	})
 
+	mux.HandleFunc("DELETE /api/metrics/{id}", func(w http.ResponseWriter, r *http.Request) {
+		deleteMetricHandler(w, r, client)
+	})
+
 	mux.Handle("GET /", homeHandler())
 
 	return addLogging(addCorsHeaders(mux))

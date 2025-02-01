@@ -23,4 +23,4 @@
 	});
 </script>
 
-&#40;<TimeSinceDisplay {timeSince} />ago&#41;
+&#40;<TimeSinceDisplay {timeSince} showMilliseconds={false} />ago&#41;

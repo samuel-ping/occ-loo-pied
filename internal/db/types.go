@@ -2,16 +2,20 @@ package db
 
 import (
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 const (
+	ID_FIELD         = "_id"
 	START_TIME_FIELD = "startTime"
 	END_TIME_FIELD   = "endTime"
+	DURATION_FIELD   = "duration"
 )
 
 type Metric struct {
-	Id        string         `json:"_id"`
-	StartTime *time.Time     `json:"startTime"`
-	EndTime   *time.Time     `json:"endTime"`
-	Duration  *time.Duration `json:"duration,omitempty"`
+	Id        bson.ObjectID  `json:"id" bson:"_id"`
+	StartTime *time.Time     `json:"startTime" bson:"startTime"`
+	EndTime   *time.Time     `json:"endTime" bson:"endTime,omitempty"`
+	Duration  *time.Duration `json:"duration,omitempty" bson:"duration"`
 }

@@ -52,11 +52,21 @@ export async function getMetrics(): Promise<metricsResponse> {
     const json = await res.json();
     return {
         metrics: json.metrics.map((m: any) => ({
-            _id: m._id,
+            id: m.id,
             startTime: new Date(m.startTime),
             endTime: new Date(m.endTime),
             duration: nanosecondsToTimeSince(m.duration)
         }))
+    }
+}
+
+export async function deleteMetric(id: string) {
+    const url = METRICS_API_URL + "/" + id
+    const res = await fetch(url, {
+        method:"DELETE"
+    })
+    if (!res.ok) {
+        throw new Error(`Response status: ${res.status}`);
     }
 }
 

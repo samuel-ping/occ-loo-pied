@@ -49,7 +49,7 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cl
 	var req setOccupiedRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Printf("Error decoding request: %v", err)
+		log.Printf("Error decoding request: %v\n", err)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -77,7 +77,7 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cl
 func getMetricsHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
 	metrics, err := db.GetAllMetrics(client)
 	if err != nil {
-		log.Printf("Error getting metrics from db: %v", err)
+		log.Printf("Error getting metrics from db: %v\n", err)
 		http.Error(w, "Error getting metrics", http.StatusInternalServerError)
 		return
 	}
@@ -87,4 +87,22 @@ func getMetricsHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Cli
 	json.NewEncoder(w).Encode(
 		getMetricsResponse{Metrics: metrics},
 	)
+}
+
+func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+	idToDelete := r.PathValue("id")
+	if len(idToDelete) == 0 {
+		log.Println("No id in path param")
+		http.Error(w, "No id in path param", http.StatusBadRequest)
+		return
+	}
+
+	_, err := db.DeleteMetric(client, idToDelete)
+	if err != nil {
+		log.Printf("Error deleting metric %s: %v\n", idToDelete, err)
+		http.Error(w, "Error deleting metric", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

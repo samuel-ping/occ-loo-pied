@@ -8,7 +8,6 @@
 
 	let occupied: boolean = $state(false);
 	let metrics: Utils.metric[] = $state([]);
-	let metricsReversed = $derived(metrics.slice().reverse()); // orders metrics from most to least recent
 
 	async function toggleOccupied() {
 		let data = await Utils.toggleOccupied(occupied);
@@ -35,13 +34,20 @@
 	onMount(async () => {
 		let data = await Utils.getMetrics();
 		metrics = data.metrics;
-		console.log(metrics);
 	});
+
+	async function onDeleteMetric(id: string) {
+		await Utils.deleteMetric(id);
+
+		// refresh state
+		let data = await Utils.getMetrics();
+		metrics = data.metrics;
+	}
 </script>
 
 <div>
 	<span>
 		Toggle override: <Toggle disabled={false} checked={occupied} onToggle={toggleOccupied} />
 	</span>
-	<Table metrics={metricsReversed} />
+	<Table {metrics} onDelete={onDeleteMetric}/>
 </div>
