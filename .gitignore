@@ -5,3 +5,6 @@ build
 
 # firmware
 arduino_secrets.h
+
+# binary
+occloopied
