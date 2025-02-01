@@ -10,29 +10,42 @@
 	let metrics: Utils.metric[] = $state([]);
 	let pagination: Utils.pagination = $state(new Utils.pagination());
 	let page: number = $state(1);
-	let itemsPerPage: number = $state(10);
+	let itemsPerPage: number = $state(20);
+	let itemRangeLower: number = $derived((page - 1) * itemsPerPage + 1);
+	let itemRangeHigher: number = $derived(
+		Math.min(itemRangeLower + itemsPerPage, pagination.totalItems)
+	);
 
 	async function toggleOccupied() {
-		let occupiedDate = await Utils.toggleOccupied(occupied);
-		occupied = occupiedDate.occupied;
+		let occupiedData = await Utils.toggleOccupied(occupied);
+		occupied = occupiedData.occupied;
 
 		let metricsData = await Utils.getMetrics(page, itemsPerPage);
 		metrics = metricsData.metrics;
+		pagination = metricsData.pagination;
 	}
 
 	onMount(async () => {
-		let data = await Utils.getOccupied();
-		if (occupied != data.occupied) {
-			occupied = data.occupied;
+		let occupiedData = await Utils.getOccupied();
+		if (occupied != occupiedData.occupied) {
+			occupied = occupiedData.occupied;
+
+			let metricsData = await Utils.getMetrics(page, itemsPerPage);
+			metrics = metricsData.metrics;
+			pagination = metricsData.pagination;
 		}
 	});
 
 	onMount(() => {
 		// Poll server every second
 		setInterval(async () => {
-			let data = await Utils.getOccupied();
-			if (occupied != data.occupied) {
-				occupied = data.occupied;
+			let occupiedData = await Utils.getOccupied();
+			if (occupied != occupiedData.occupied) {
+				occupied = occupiedData.occupied;
+
+				let metricsData = await Utils.getMetrics(page, itemsPerPage);
+				metrics = metricsData.metrics;
+				pagination = metricsData.pagination;
 			}
 		}, ONE_SECOND);
 	});
@@ -53,14 +66,15 @@
 	}
 
 	async function changePage(changeTo: number) {
-		page = changeTo
+		page = changeTo;
 		let data = await Utils.getMetrics(changeTo, itemsPerPage);
 		metrics = data.metrics;
 		pagination = data.pagination;
 	}
 </script>
 
-<div>
+<div class="flex flex-col h-full w-full gap-4">
+	<h1 class="font-bold text-lg">Admin</h1>
 	<span>
 		Toggle override: <Toggle disabled={false} checked={occupied} onToggle={toggleOccupied} />
 	</span>
@@ -68,6 +82,9 @@
 		{metrics}
 		onDelete={deleteMetric}
 		onPageChange={changePage}
+		totalItems={pagination.totalItems}
+		{itemRangeLower}
+		{itemRangeHigher}
 		nextPage={pagination.nextPage}
 		prevPage={pagination.prevPage}
 	/>
