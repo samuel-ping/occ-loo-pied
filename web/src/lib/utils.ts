@@ -91,6 +91,31 @@ export async function deleteMetric(id: string) {
 	}
 }
 
+interface usagesByDayResponse {
+	usagesByDay: usageByDayMetric[];
+}
+
+export interface usageByDayMetric {
+	date: string;
+	timesUsed: number;
+}
+
+export async function usagesByDay(): Promise<usagesByDayResponse> {
+	const res = await fetch(METRICS_API_URL + '/usagesByDay');
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
+
+	const json = await res.json();
+	
+	return {
+		usagesByDay: json.usagesByDay.map((u: any) => ({
+			date: u.date,
+			timesUsed: u.timesUsed
+		}))
+	}
+}
+
 export interface timeSince {
 	hours: number;
 	minutes: number;

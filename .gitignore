@@ -8,3 +8,6 @@ arduino_secrets.h
 
 # binary
 occloopied
+
+# sample data
+tools/sampleMetrics.json

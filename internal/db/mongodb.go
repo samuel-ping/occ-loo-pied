@@ -89,3 +89,31 @@ func DocumentCount(client *mongo.Client) (int64, error) {
 
 	return res, nil
 }
+
+func UsagesByDay(client *mongo.Client) ([]UsagesByDayMetric, error) {
+	groupStage := bson.D{
+		{Key: GROUP, Value: bson.D{
+			{Key: ID_FIELD, Value: bson.D{
+				{Key: DATE_TO_STRING, Value: bson.D{
+					{Key: FORMAT, Value: "%Y-%m-%d"},
+					{Key: DATE, Value: "$" + START_TIME_FIELD},
+				}},
+			}},
+			{Key: COUNT_FIELD, Value: bson.D{
+				{Key: SUM, Value: 1},
+			}},
+		}},
+	}
+
+	cursor, err := client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{groupStage})
+	if err != nil {
+		return nil, err
+	}
+
+	var usagesByDay []UsagesByDayMetric
+	if err = cursor.All(context.Background(), &usagesByDay); err != nil {
+		return nil, err
+	}
+
+	return usagesByDay, nil
+}

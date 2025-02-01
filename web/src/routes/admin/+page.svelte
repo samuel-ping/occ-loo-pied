@@ -74,7 +74,7 @@
 </script>
 
 <div class="flex flex-col h-full w-full gap-4">
-	<h1 class="font-bold text-lg">Admin</h1>
+	<h1 class="font-bold text-xl">Admin</h1>
 	<span>
 		Toggle override: <Toggle disabled={false} checked={occupied} onToggle={toggleOccupied} />
 	</span>

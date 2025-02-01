@@ -159,3 +159,20 @@ func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.C
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
+	usagesByDay, err := db.UsagesByDay(client)
+	if err != nil {
+		log.Printf("Error getting usages by day: %v\n", err)
+		http.Error(w, "Error getting usages by day", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		usagesByDayResponse{
+			UsagesByDay: usagesByDay,
+		},
+	)
+}

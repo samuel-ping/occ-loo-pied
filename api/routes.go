@@ -20,6 +20,10 @@ func SetupRoutes(mux *http.ServeMux, client *mongo.Client) http.Handler {
 		deleteMetricHandler(w, r, client)
 	})
 
+	mux.HandleFunc("GET /api/metrics/usagesByDay", func(w http.ResponseWriter, r *http.Request) {
+		usagesByDayHandler(w, r, client)
+	})
+
 	mux.Handle("GET /", homeHandler())
 
 	return addLogging(addCorsHeaders(mux))

@@ -27,3 +27,7 @@ type Pagination struct {
 	NextPage   *int `json:"nextPage"`
 	PrevPage   *int `json:"prevPage"`
 }
+
+type usagesByDayResponse struct {
+	UsagesByDay []db.UsagesByDayMetric `json:"usagesByDay"`
+}
