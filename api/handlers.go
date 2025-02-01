@@ -5,12 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/samuel-ping/occ-loo-pied/internal/db"
+	"github.com/samuel-ping/occ-loo-pied/internal/utils"
 	"github.com/samuel-ping/occ-loo-pied/web"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
@@ -74,18 +77,68 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cl
 	)
 }
 
-func getMetricsHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
-	metrics, err := db.GetAllMetrics(client)
+func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+	pageParam := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageParam)
+	if err != nil {
+		log.Printf("error parsing page number: %v\n", err)
+		http.Error(w, "error parsing page number", http.StatusBadRequest)
+		return
+	}
+	itemsPerPageParam := r.URL.Query().Get("itemsPerPage")
+	itemsPerPage, err := strconv.Atoi(itemsPerPageParam)
+	if err != nil {
+		log.Printf("error parsing items per page number: %v\n", err)
+		http.Error(w, "error parsing page number", http.StatusBadRequest)
+		return
+	}
+
+	skip := (page - 1) * itemsPerPage
+
+	totalDocuments, err := db.DocumentCount(client)
+	if err != nil {
+		log.Printf("error getting document count: %v\n", err)
+		http.Error(w, "Error getting document count", http.StatusInternalServerError)
+		return
+	}
+
+	totalPages := int(math.Ceil(float64(totalDocuments) / float64(itemsPerPage)))
+	if page > totalPages {
+		log.Println("requested page number exceeds page count")
+		http.Error(w, "Requested page number exceeds page count", http.StatusBadRequest)
+		return
+	}
+
+	metrics, err := db.GetMetrics(client, int64(skip), int64(itemsPerPage))
 	if err != nil {
 		log.Printf("Error getting metrics from db: %v\n", err)
 		http.Error(w, "Error getting metrics", http.StatusInternalServerError)
 		return
 	}
 
+	var nextPage *int
+	if page+1 <= totalPages {
+		nextPage = utils.IntPtr(page + 1)
+	}
+
+	var prevPage *int
+	if page-1 >= 1 {
+		prevPage = utils.IntPtr(page - 1)
+	}
+
 	w.Header().Set("Content-Type", "text/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
-		getMetricsResponse{Metrics: metrics},
+		getMetricsResponse{
+			Metrics: metrics,
+			Pagination: Pagination{
+				TotalItems: int(totalDocuments),
+				Page:       page,
+				TotalPages: totalPages,
+				NextPage:   nextPage,
+				PrevPage:   prevPage,
+			},
+		},
 	)
 }
 

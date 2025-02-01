@@ -16,5 +16,14 @@ type setOccupiedRequest struct {
 }
 
 type getMetricsResponse struct {
-	Metrics []db.Metric `json:"metrics"`
+	Metrics    []db.Metric `json:"metrics"`
+	Pagination Pagination  `json:"pagination"`
+}
+
+type Pagination struct {
+	TotalItems int  `json:"totalItems"`
+	Page       int  `json:"page"`
+	TotalPages int  `json:"totalPages"`
+	NextPage   *int `json:"nextPage"`
+	PrevPage   *int `json:"prevPage"`
 }

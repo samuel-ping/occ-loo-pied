@@ -1,80 +1,101 @@
-import { OCCUPIED_API_URL, METRICS_API_URL } from "./constants";
-
+import { OCCUPIED_API_URL, METRICS_API_URL } from './constants';
 
 interface occupiedResponse {
-    occupied: boolean;
-    occupiedStartTime?: Date;
+	occupied: boolean;
+	occupiedStartTime?: Date;
 }
 
 export async function getOccupied(): Promise<occupiedResponse> {
-    const res = await fetch(OCCUPIED_API_URL);
-    if (!res.ok) {
-        throw new Error(`Response status: ${res.status}`);
-    }
+	const res = await fetch(OCCUPIED_API_URL);
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
 
-    const json = await res.json();
-    return {
-        occupied: json.occupied,
-        occupiedStartTime: new Date(json.occupiedStartTime)
-    };
+	const json = await res.json();
+	return {
+		occupied: json.occupied,
+		occupiedStartTime: new Date(json.occupiedStartTime)
+	};
 }
 
 export async function toggleOccupied(occupied: boolean): Promise<occupiedResponse> {
-    const res = await fetch(OCCUPIED_API_URL, {
-        method: 'PUT',
-        body: JSON.stringify({ occupied: !occupied })
-    });
+	const res = await fetch(OCCUPIED_API_URL, {
+		method: 'PUT',
+		body: JSON.stringify({ occupied: !occupied })
+	});
 
-    const json = await res.json();
-    return {
-        occupied: json.occupied,
-        occupiedStartTime: new Date(json.occupiedStartTime)
-    }
+	const json = await res.json();
+	return {
+		occupied: json.occupied,
+		occupiedStartTime: new Date(json.occupiedStartTime)
+	};
 }
 
 interface metricsResponse {
-    metrics: metric[]
+	metrics: metric[];
+	pagination: pagination;
 }
 
 export interface metric {
-    id: string;
-    startTime: Date;
-    endTime: Date;
-    duration: timeSince;
+	id: string;
+	startTime: Date;
+	endTime: Date;
+	duration: timeSince;
 }
 
-export async function getMetrics(): Promise<metricsResponse> {
-    const res = await fetch(METRICS_API_URL)
-    if (!res.ok) {
-        throw new Error(`Response status: ${res.status}`);
-    }
+export class pagination {
+	totalItems: number = 0;
+	page: number = 1;
+	totalPages: number = 0;
+	nextPage?: number = 2;
+	prevPage?: number;
+}
 
-    const json = await res.json();
-    return {
-        metrics: json.metrics.map((m: any) => ({
-            id: m.id,
-            startTime: new Date(m.startTime),
-            endTime: new Date(m.endTime),
-            duration: nanosecondsToTimeSince(m.duration)
-        }))
-    }
+export async function getMetrics(page: number, itemsPerPage: number): Promise<metricsResponse> {
+	const params = new URLSearchParams({
+		page: page.toString(),
+		itemsPerPage: itemsPerPage.toString()
+	});
+	const res = await fetch(METRICS_API_URL + '?' + params);
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
+
+	const json = await res.json();
+
+	let paginationDetails = new pagination();
+	paginationDetails.totalItems = json.pagination.totalItems;
+	paginationDetails.page = json.pagination.page;
+	paginationDetails.totalPages = json.pagination.totalPages;
+	paginationDetails.nextPage = json.pagination.nextPage;
+	paginationDetails.prevPage = json.pagination.prevPage;
+
+	return {
+		metrics: json.metrics.map((m: any) => ({
+			id: m.id,
+			startTime: new Date(m.startTime),
+			endTime: new Date(m.endTime),
+			duration: nanosecondsToTimeSince(m.duration)
+		})),
+		pagination: paginationDetails
+	};
 }
 
 export async function deleteMetric(id: string) {
-    const url = METRICS_API_URL + "/" + id
-    const res = await fetch(url, {
-        method:"DELETE"
-    })
-    if (!res.ok) {
-        throw new Error(`Response status: ${res.status}`);
-    }
+	const url = METRICS_API_URL + '/' + id;
+	const res = await fetch(url, {
+		method: 'DELETE'
+	});
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
 }
 
 export interface timeSince {
-    hours: number;
-    minutes: number;
-    seconds: number;
-    milliseconds: number;
+	hours: number;
+	minutes: number;
+	seconds: number;
+	milliseconds: number;
 }
 
 /**
@@ -83,18 +104,18 @@ export interface timeSince {
  * @returns the amount of time since the input date in hours, minutes, and seconds
  */
 export function timeSince(thenDate: Date): timeSince {
-    let now: number = Date.now();
-    let then: number = thenDate.getTime();
+	let now: number = Date.now();
+	let then: number = thenDate.getTime();
 
-    let timeSinceMs = now - then;
-    let timeSinceDate = new Date(timeSinceMs)
-    
-    return {
-        hours: timeSinceDate.getHours() - 19, // I don't know why but its showing 19 hours more for some reason but I'll figure it out later
-        minutes: timeSinceDate.getMinutes(),
-        seconds: timeSinceDate.getSeconds(),
-        milliseconds: timeSinceDate.getUTCMilliseconds() // usually isn't used
-    }
+	let timeSinceMs = now - then;
+	let timeSinceDate = new Date(timeSinceMs);
+
+	return {
+		hours: timeSinceDate.getHours() - 19, // I don't know why but its showing 19 hours more for some reason but I'll figure it out later
+		minutes: timeSinceDate.getMinutes(),
+		seconds: timeSinceDate.getSeconds(),
+		milliseconds: timeSinceDate.getUTCMilliseconds() // usually isn't used
+	};
 }
 
 /**
@@ -103,13 +124,13 @@ export function timeSince(thenDate: Date): timeSince {
  * @returns time elapsed in hours, minutes, and seconds
  */
 function nanosecondsToTimeSince(duration: number): timeSince {
-    const milliseconds = duration / 1e6;
-    const date = new Date(milliseconds);
+	const milliseconds = duration / 1e6;
+	const date = new Date(milliseconds);
 
-    return {
-        hours: date.getUTCHours(),
-        minutes: date.getUTCMinutes(),
-        seconds: date.getUTCSeconds(),
-        milliseconds: date.getUTCMilliseconds()
-    };
+	return {
+		hours: date.getUTCHours(),
+		minutes: date.getUTCMinutes(),
+		seconds: date.getUTCSeconds(),
+		milliseconds: date.getUTCMilliseconds()
+	};
 }

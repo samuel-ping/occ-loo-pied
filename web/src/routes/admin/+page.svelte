@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	
+
 	import Toggle from '$lib/Toggle.svelte';
 	import * as Utils from '$lib/utils';
 	import Table from './Table.svelte';
@@ -8,10 +8,16 @@
 
 	let occupied: boolean = $state(false);
 	let metrics: Utils.metric[] = $state([]);
+	let pagination: Utils.pagination = $state(new Utils.pagination());
+	let page: number = $state(1);
+	let itemsPerPage: number = $state(10);
 
 	async function toggleOccupied() {
-		let data = await Utils.toggleOccupied(occupied);
-		occupied = data.occupied;
+		let occupiedDate = await Utils.toggleOccupied(occupied);
+		occupied = occupiedDate.occupied;
+
+		let metricsData = await Utils.getMetrics(page, itemsPerPage);
+		metrics = metricsData.metrics;
 	}
 
 	onMount(async () => {
@@ -32,16 +38,25 @@
 	});
 
 	onMount(async () => {
-		let data = await Utils.getMetrics();
+		let data = await Utils.getMetrics(page, itemsPerPage);
 		metrics = data.metrics;
+		pagination = data.pagination;
 	});
 
-	async function onDeleteMetric(id: string) {
+	async function deleteMetric(id: string) {
 		await Utils.deleteMetric(id);
 
 		// refresh state
-		let data = await Utils.getMetrics();
+		let data = await Utils.getMetrics(page, itemsPerPage);
 		metrics = data.metrics;
+		pagination = data.pagination;
+	}
+
+	async function changePage(changeTo: number) {
+		page = changeTo
+		let data = await Utils.getMetrics(changeTo, itemsPerPage);
+		metrics = data.metrics;
+		pagination = data.pagination;
 	}
 </script>
 
@@ -49,5 +64,11 @@
 	<span>
 		Toggle override: <Toggle disabled={false} checked={occupied} onToggle={toggleOccupied} />
 	</span>
-	<Table {metrics} onDelete={onDeleteMetric}/>
+	<Table
+		{metrics}
+		onDelete={deleteMetric}
+		onPageChange={changePage}
+		nextPage={pagination.nextPage}
+		prevPage={pagination.prevPage}
+	/>
 </div>

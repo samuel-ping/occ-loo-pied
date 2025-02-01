@@ -46,10 +46,10 @@ func AddOccupiedMetric(client *mongo.Client, startTime *time.Time, endTime *time
 	return nil
 }
 
-func GetAllMetrics(client *mongo.Client) ([]Metric, error) {
+func GetMetrics(client *mongo.Client, skip int64, limit int64) ([]Metric, error) {
 	filter := bson.D{}
 	sort := bson.D{{Key: START_TIME_FIELD, Value: -1}}
-	opts := options.Find().SetSort(sort)
+	opts := options.Find().SetSkip(skip).SetLimit(limit).SetSort(sort)
 	cursor, err := client.Database(DB).Collection(COLLECTION).Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
@@ -79,4 +79,13 @@ func DeleteMetric(client *mongo.Client, id string) (bool, error) {
 		return false, nil
 	}
 	return true, nil
+}
+
+func DocumentCount(client *mongo.Client) (int64, error) {
+	res, err := client.Database(DB).Collection(COLLECTION).CountDocuments(context.Background(), bson.D{})
+	if err != nil {
+		return -1, err
+	}
+
+	return res, nil
 }
