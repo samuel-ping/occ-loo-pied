@@ -40,7 +40,7 @@ export interface metric {
 	id: string;
 	startTime: Date;
 	endTime: Date;
-	duration: timeSince;
+	duration: number;
 }
 
 export class pagination {
@@ -75,7 +75,7 @@ export async function getMetrics(page: number, itemsPerPage: number): Promise<me
 			id: m.id,
 			startTime: new Date(m.startTime),
 			endTime: new Date(m.endTime),
-			duration: nanosecondsToTimeSince(m.duration)
+			duration: m.duration
 		})),
 		pagination: paginationDetails
 	};
@@ -93,6 +93,7 @@ export async function deleteMetric(id: string) {
 
 interface usagesByDayResponse {
 	usagesByDay: usageByDayMetric[];
+	mostUsagesInADay: number;
 }
 
 export interface usageByDayMetric {
@@ -107,13 +108,48 @@ export async function usagesByDay(): Promise<usagesByDayResponse> {
 	}
 
 	const json = await res.json();
-	
+
 	return {
 		usagesByDay: json.usagesByDay.map((u: any) => ({
 			date: u.date,
 			timesUsed: u.timesUsed
-		}))
+		})),
+		mostUsagesInADay: json.mostUsagesInADay
 	}
+}
+
+export class stats {
+	totalUsages: number = 0;
+	duration: durationStats = {
+		total: -1,
+		longest: {
+			id: "",
+			duration: -1,
+			startTime: new Date(),
+			endTime: new Date(),
+		},
+		average: -1.0
+	};
+}
+
+export interface durationStats {
+	total: number;
+	longest: metric;
+	average: number;
+}
+
+export async function getStats(): Promise<stats> {
+	const res = await fetch(METRICS_API_URL + '/stats');
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
+
+	const json = await res.json();
+
+	json.stats.duration.longest.startTime = new Date(json.stats.duration.longest.startTime);
+	json.stats.duration.longest.endTime = new Date(json.stats.duration.longest.endTime);
+	
+	return json.stats
 }
 
 export interface timeSince {
@@ -136,7 +172,7 @@ export function timeSince(thenDate: Date): timeSince {
 	let timeSinceDate = new Date(timeSinceMs);
 
 	return {
-		hours: timeSinceDate.getHours() - 19, // I don't know why but its showing 19 hours more for some reason but I'll figure it out later
+		hours: timeSinceDate.getUTCHours(),
 		minutes: timeSinceDate.getMinutes(),
 		seconds: timeSinceDate.getSeconds(),
 		milliseconds: timeSinceDate.getUTCMilliseconds() // usually isn't used
@@ -148,14 +184,14 @@ export function timeSince(thenDate: Date): timeSince {
  * @param duration time elapsed in nanoseconds
  * @returns time elapsed in hours, minutes, and seconds
  */
-function nanosecondsToTimeSince(duration: number): timeSince {
+export function nanosecondsToTimeSince(duration: number): timeSince {
 	const milliseconds = duration / 1e6;
 	const date = new Date(milliseconds);
 
 	return {
 		hours: date.getUTCHours(),
-		minutes: date.getUTCMinutes(),
-		seconds: date.getUTCSeconds(),
-		milliseconds: date.getUTCMilliseconds()
+		minutes: date.getMinutes(),
+		seconds: date.getSeconds(),
+		milliseconds: date.getMilliseconds()
 	};
 }

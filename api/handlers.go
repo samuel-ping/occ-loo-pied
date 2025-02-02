@@ -132,7 +132,7 @@ func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cli
 		getMetricsResponse{
 			Metrics: metrics,
 			Pagination: Pagination{
-				TotalItems: int(totalDocuments),
+				TotalItems: totalDocuments,
 				Page:       page,
 				TotalPages: totalPages,
 				NextPage:   nextPage,
@@ -168,11 +168,31 @@ func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Cl
 		return
 	}
 
+	dayWithMostUsage := utils.FindMostUsagesInADay(usagesByDay)
+
 	w.Header().Set("Content-Type", "text/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		usagesByDayResponse{
-			UsagesByDay: usagesByDay,
+			UsagesByDay:      usagesByDay,
+			MostUsagesInADay: dayWithMostUsage.TimesUsed,
+		},
+	)
+}
+
+func getStatsHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
+	generalMetrics, err := db.CalcStats(client)
+	if err != nil {
+		log.Printf("error calculating stats: %v\n", err)
+		http.Error(w, "error calculating stats", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(
+		statsResponse{
+			Stats: generalMetrics,
 		},
 	)
 }

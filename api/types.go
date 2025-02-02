@@ -21,13 +21,18 @@ type getMetricsResponse struct {
 }
 
 type Pagination struct {
-	TotalItems int  `json:"totalItems"`
-	Page       int  `json:"page"`
-	TotalPages int  `json:"totalPages"`
-	NextPage   *int `json:"nextPage"`
-	PrevPage   *int `json:"prevPage"`
+	TotalItems int64 `json:"totalItems"`
+	Page       int   `json:"page"`
+	TotalPages int   `json:"totalPages"`
+	NextPage   *int  `json:"nextPage"`
+	PrevPage   *int  `json:"prevPage"`
 }
 
 type usagesByDayResponse struct {
-	UsagesByDay []db.UsagesByDayMetric `json:"usagesByDay"`
+	UsagesByDay      []db.UsagesByDayMetric `json:"usagesByDay"`
+	MostUsagesInADay int                    `json:"mostUsagesInADay"`
+}
+
+type statsResponse struct {
+	Stats db.Stats `json:"stats"`
 }

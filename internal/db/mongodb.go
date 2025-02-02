@@ -117,3 +117,83 @@ func UsagesByDay(client *mongo.Client) ([]UsagesByDayMetric, error) {
 
 	return usagesByDay, nil
 }
+
+func CalcStats(client *mongo.Client) (Stats, error) {
+	var stats Stats
+
+	totalUsages, err := DocumentCount(client)
+	if err != nil {
+		return stats, err
+	}
+	stats.TotalUsages = totalUsages
+
+	facetStage := bson.D{
+		{Key: FACET, Value: bson.D{
+			{Key: TOTAL_DURATION_FIELD, Value: totalDurationPipeline()},
+			{Key: LONGEST_DURATION_AND_DATE_FIELD, Value: longestDurationAndDatePipeline()},
+			{Key: AVERAGE_DURATION_FIELD, Value: avgDurationPipeline()},
+		}},
+	}
+
+	// moves all the important fields to the top level of the document
+	projectStage := bson.D{
+		{Key: PROJECT, Value: bson.D{
+			{Key: TOTAL_DURATION_FIELD, Value: bson.D{
+				{Key: ARRAY_ELEM_AT, Value: bson.A{"$" + TOTAL_DURATION_FIELD + "." + TOTAL_DURATION_FIELD, 0}},
+			}},
+			{Key: LONGEST_DURATION_AND_DATE_FIELD, Value: bson.D{
+				{Key: ARRAY_ELEM_AT, Value: bson.A{"$" + LONGEST_DURATION_AND_DATE_FIELD, 0}},
+			}},
+			{Key: AVERAGE_DURATION_FIELD, Value: bson.D{
+				{Key: ARRAY_ELEM_AT, Value: bson.A{"$" + AVERAGE_DURATION_FIELD + "." + AVERAGE_DURATION_FIELD, 0}},
+			}},
+		}},
+	}
+
+	cursor, err := client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{facetStage, projectStage})
+	if err != nil {
+		return stats, err
+	}
+
+	var durationStats []DurationStats
+	if err = cursor.All(context.Background(), &durationStats); err != nil {
+		return stats, err
+	}
+	stats.DurationStats = durationStats[0]
+
+	return stats, nil
+}
+
+func totalDurationPipeline() bson.A {
+	groupStage := bson.D{
+		{Key: GROUP, Value: bson.D{
+			{Key: ID_FIELD, Value: nil},
+			{Key: TOTAL_DURATION_FIELD, Value: bson.D{
+				{Key: SUM, Value: "$" + DURATION_FIELD},
+			}},
+		}},
+	}
+
+	return bson.A{groupStage}
+}
+
+func longestDurationAndDatePipeline() bson.A {
+	sortStage := bson.D{{Key: SORT, Value: bson.D{{Key: DURATION_FIELD, Value: -1}}}}
+	limitStage := bson.D{{Key: LIMIT, Value: 1}}
+
+	return bson.A{sortStage, limitStage}
+
+}
+
+func avgDurationPipeline() bson.A {
+	groupStage := bson.D{
+		{Key: GROUP, Value: bson.D{
+			{Key: ID_FIELD, Value: nil},
+			{Key: AVERAGE_DURATION_FIELD, Value: bson.D{
+				{Key: AVG, Value: "$" + DURATION_FIELD},
+			}},
+		}},
+	}
+
+	return bson.A{groupStage}
+}
