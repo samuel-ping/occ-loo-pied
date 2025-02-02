@@ -13,6 +13,7 @@
 	import 'cal-heatmap/cal-heatmap.css';
 
 	let usagesByDay: Utils.usageByDayMetric[] = $state([]);
+	let leastUsagesInADay: number = $state(0);
 	let mostUsagesInADay: number = $state(0);
 
 	const calPlugins = [
@@ -28,10 +29,10 @@
 			{
 				text: function (
 					timestamp: number,
-					 value: number,
-					 // @ts-expect-error: dayjs type is already included in cal-heatmap package. Not sure why its giving a ts-error.
-					 dayjsDate: dayjs.Dayjs
-					) {
+					value: number,
+					// @ts-expect-error: dayjs type is already included in cal-heatmap package. Not sure why its giving a ts-error.
+					dayjsDate: dayjs.Dayjs
+				) {
 					let display = `${dayjsDate.format('MMM D')} - ${value} usages`;
 					return display;
 				}
@@ -47,16 +48,16 @@
 			subDomain: {
 				type: 'day'
 			},
-			date: { 
+			date: {
 				start: new Date('2025-01-01'),
-				timezone: 'America/New_York',
+				timezone: 'America/New_York'
 			},
 			data: { source: usagesByDay, x: 'date', y: 'timesUsed' },
 			scale: {
 				color: {
 					scheme: 'YlGn',
 					type: 'linear',
-					domain: [0, mostUsagesInADay]
+					domain: [leastUsagesInADay, mostUsagesInADay]
 				}
 			}
 		};
@@ -65,6 +66,7 @@
 	onMount(async () => {
 		let usagesByDayData = await Utils.usagesByDay();
 		usagesByDay = usagesByDayData.usagesByDay;
+		leastUsagesInADay = usagesByDayData.leastUsagesInADay;
 		mostUsagesInADay = usagesByDayData.mostUsagesInADay;
 
 		const cal: CalHeatmap = new CalHeatmap();
@@ -73,8 +75,11 @@
 	});
 </script>
 
-<div class="flex flex-col items-center w-full overflow-visible">
-	<span class="md:hidden">NOTE: Your screen is small, you probably either need to turn your device to landscape mode or turn on desktop mode to view the full heatmap 🙂</span>
+<div class="flex w-full flex-col items-center overflow-visible">
+	<span class="md:hidden"
+		>NOTE: Your screen is small, you probably either need to turn your device to landscape mode or
+		turn on desktop mode to view the full heatmap 🙂</span
+	>
 	<div id="usage-heatmap"></div>
 	<div id="usage-heatmap-legend"></div>
 </div>

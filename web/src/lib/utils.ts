@@ -81,6 +81,16 @@ export async function getMetrics(page: number, itemsPerPage: number): Promise<me
 	};
 }
 
+export async function clearMetricEndTimeAndDuration(id: string) {
+	const url = METRICS_API_URL + '/' + id + '/endTimeAndDuration';
+	const res = await fetch(url, {
+		method: 'DELETE'
+	});
+	if (!res.ok) {
+		throw new Error(`Response status: ${res.status}`);
+	}
+}
+
 export async function deleteMetric(id: string) {
 	const url = METRICS_API_URL + '/' + id;
 	const res = await fetch(url, {
@@ -93,6 +103,7 @@ export async function deleteMetric(id: string) {
 
 interface usagesByDayResponse {
 	usagesByDay: usageByDayMetric[];
+	leastUsagesInADay: number;
 	mostUsagesInADay: number;
 }
 
@@ -114,8 +125,9 @@ export async function usagesByDay(): Promise<usagesByDayResponse> {
 			date: u.date,
 			timesUsed: u.timesUsed
 		})),
+		leastUsagesInADay: json.leastUsagesInADay,
 		mostUsagesInADay: json.mostUsagesInADay
-	}
+	};
 }
 
 export class stats {
@@ -123,10 +135,10 @@ export class stats {
 	duration: durationStats = {
 		total: -1,
 		longest: {
-			id: "",
+			id: '',
 			duration: -1,
 			startTime: new Date(),
-			endTime: new Date(),
+			endTime: new Date()
 		},
 		average: -1.0
 	};
@@ -148,8 +160,8 @@ export async function getStats(): Promise<stats> {
 
 	json.stats.duration.longest.startTime = new Date(json.stats.duration.longest.startTime);
 	json.stats.duration.longest.endTime = new Date(json.stats.duration.longest.endTime);
-	
-	return json.stats
+
+	return json.stats;
 }
 
 export interface timeSince {

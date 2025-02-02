@@ -42,10 +42,6 @@
 			let occupiedData = await Utils.getOccupied();
 			if (occupied != occupiedData.occupied) {
 				occupied = occupiedData.occupied;
-
-				let metricsData = await Utils.getMetrics(page, itemsPerPage);
-				metrics = metricsData.metrics;
-				pagination = metricsData.pagination;
 			}
 		}, ONE_SECOND);
 	});
@@ -56,8 +52,23 @@
 		pagination = data.pagination;
 	});
 
+	async function refreshTable() {
+		let data = await Utils.getMetrics(page, itemsPerPage);
+		metrics = data.metrics;
+		pagination = data.pagination;
+	}
+
 	async function deleteMetric(id: string) {
 		await Utils.deleteMetric(id);
+
+		// refresh state
+		let data = await Utils.getMetrics(page, itemsPerPage);
+		metrics = data.metrics;
+		pagination = data.pagination;
+	}
+
+	async function clearMetricEndTimeAndDuration(id: string) {
+		await Utils.clearMetricEndTimeAndDuration(id);
 
 		// refresh state
 		let data = await Utils.getMetrics(page, itemsPerPage);
@@ -73,13 +84,15 @@
 	}
 </script>
 
-<div class="flex flex-col h-full w-full gap-4">
-	<h1 class="font-bold text-xl">Admin</h1>
+<div class="flex h-full w-full flex-col gap-4">
+	<h1 class="text-xl font-bold">Admin</h1>
 	<span>
 		Toggle override: <Toggle disabled={false} checked={occupied} onToggle={toggleOccupied} />
 	</span>
 	<Table
 		{metrics}
+		onRefresh={refreshTable}
+		onClearEndTimeAndDuration={clearMetricEndTimeAndDuration}
 		onDelete={deleteMetric}
 		onPageChange={changePage}
 		totalItems={pagination.totalItems}

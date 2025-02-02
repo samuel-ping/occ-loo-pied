@@ -29,8 +29,9 @@ type Pagination struct {
 }
 
 type usagesByDayResponse struct {
-	UsagesByDay      []db.UsagesByDayMetric `json:"usagesByDay"`
-	MostUsagesInADay int                    `json:"mostUsagesInADay"`
+	UsagesByDay       []db.UsagesByDayMetric `json:"usagesByDay"`
+	LeastUsagesInADay int                    `json:"leastUsagesInADay"`
+	MostUsagesInADay  int                    `json:"mostUsagesInADay"`
 }
 
 type statsResponse struct {

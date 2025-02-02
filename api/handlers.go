@@ -15,6 +15,7 @@ import (
 	"github.com/samuel-ping/occ-loo-pied/internal/db"
 	"github.com/samuel-ping/occ-loo-pied/internal/utils"
 	"github.com/samuel-ping/occ-loo-pied/web"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -142,6 +143,30 @@ func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cli
 	)
 }
 
+func clearMetricEndTimeAndDurationHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+	rawMetricId := r.PathValue("id")
+	if len(rawMetricId) == 0 {
+		log.Println("No id in path param")
+		http.Error(w, "No id in path param", http.StatusBadRequest)
+		return
+	}
+
+	metricId, err := bson.ObjectIDFromHex(rawMetricId)
+	if err != nil {
+		log.Printf("error converting id %s to objectId: %v\n", rawMetricId, err)
+		http.Error(w, "error converting id to objectId", http.StatusBadRequest)
+		return
+	}
+
+	if err := db.ClearMetricEndTimeAndDuration(client, metricId); err != nil {
+		log.Printf("Error clearing endTime for metric %s: %v\n", metricId, err)
+		http.Error(w, "Error clearing endTime for metric", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
 	idToDelete := r.PathValue("id")
 	if len(idToDelete) == 0 {
@@ -168,14 +193,15 @@ func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Cl
 		return
 	}
 
-	dayWithMostUsage := utils.FindMostUsagesInADay(usagesByDay)
+	dayWithLeastUsage, dayWithMostUsage := utils.FindLeastAndMostUsagesInADay(usagesByDay)
 
 	w.Header().Set("Content-Type", "text/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(
 		usagesByDayResponse{
-			UsagesByDay:      usagesByDay,
-			MostUsagesInADay: dayWithMostUsage.TimesUsed,
+			UsagesByDay:       usagesByDay,
+			LeastUsagesInADay: dayWithLeastUsage.TimesUsed,
+			MostUsagesInADay:  dayWithMostUsage.TimesUsed,
 		},
 	)
 }

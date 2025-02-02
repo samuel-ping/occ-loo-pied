@@ -63,6 +63,16 @@ func GetMetrics(client *mongo.Client, skip int64, limit int64) ([]Metric, error)
 	return metrics, nil
 }
 
+func ClearMetricEndTimeAndDuration(client *mongo.Client, id bson.ObjectID) error {
+	update := bson.D{{Key: UNSET, Value: bson.D{{Key: END_TIME_FIELD, Value: ""}, {Key: DURATION_FIELD, Value: ""}}}}
+	_, err := client.Database(DB).Collection(COLLECTION).UpdateByID(context.Background(), id, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteMetric(client *mongo.Client, id string) (bool, error) {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
@@ -164,6 +174,16 @@ func CalcStats(client *mongo.Client) (Stats, error) {
 	return stats, nil
 }
 
+// stage that matches documents where the duration field is not null
+var matchOnDurationFieldStage = bson.D{
+	{Key: MATCH, Value: bson.D{
+		{Key: DURATION_FIELD, Value: bson.D{
+			{Key: EXISTS, Value: true},
+			{Key: NE, Value: nil},
+		}},
+	}},
+}
+
 func totalDurationPipeline() bson.A {
 	groupStage := bson.D{
 		{Key: GROUP, Value: bson.D{
@@ -174,14 +194,14 @@ func totalDurationPipeline() bson.A {
 		}},
 	}
 
-	return bson.A{groupStage}
+	return bson.A{matchOnDurationFieldStage, groupStage}
 }
 
 func longestDurationAndDatePipeline() bson.A {
 	sortStage := bson.D{{Key: SORT, Value: bson.D{{Key: DURATION_FIELD, Value: -1}}}}
 	limitStage := bson.D{{Key: LIMIT, Value: 1}}
 
-	return bson.A{sortStage, limitStage}
+	return bson.A{matchOnDurationFieldStage, sortStage, limitStage}
 
 }
 
@@ -195,5 +215,5 @@ func avgDurationPipeline() bson.A {
 		}},
 	}
 
-	return bson.A{groupStage}
+	return bson.A{matchOnDurationFieldStage, groupStage}
 }
