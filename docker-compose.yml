@@ -9,6 +9,8 @@ services:
       watch: 
         - path: .
           action: rebuild
+    env_file:
+      - .env
   db:
     image: mongo
     restart: always

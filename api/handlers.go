@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/samuel-ping/occ-loo-pied/internal/db"
+	"github.com/samuel-ping/occ-loo-pied/internal/ntfy"
 	"github.com/samuel-ping/occ-loo-pied/internal/utils"
 	"github.com/samuel-ping/occ-loo-pied/web"
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -49,7 +50,7 @@ func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
 	)
 }
 
-func setOccupiedHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+func setOccupiedHandler(w http.ResponseWriter, r *http.Request, mongoClient *mongo.Client, ntfyClient *ntfy.Client) {
 	var req setOccupiedRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -64,10 +65,12 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cl
 		occupiedStartTime = &startTime
 	} else {
 		endTime := time.Now()
-		db.AddOccupiedMetric(client, occupiedStartTime, &endTime)
-
+		db.AddOccupiedMetric(mongoClient, occupiedStartTime, &endTime)
 		occupiedStartTime = nil
 	}
+
+	// send notification
+	ntfyClient.SendOccupationNotification(bathroomOccupied)
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(

@@ -11,3 +11,6 @@ occloopied
 
 # sample data
 tools/sampleMetrics.json
+
+# env
+.env
