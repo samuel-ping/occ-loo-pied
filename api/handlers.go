@@ -17,7 +17,6 @@ import (
 	"github.com/samuel-ping/occ-loo-pied/internal/utils"
 	"github.com/samuel-ping/occ-loo-pied/web"
 	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 var bathroomOccupied bool
@@ -50,7 +49,7 @@ func getOccupiedHandler(w http.ResponseWriter, _ *http.Request) {
 	)
 }
 
-func setOccupiedHandler(w http.ResponseWriter, r *http.Request, mongoClient *mongo.Client, ntfyClient *ntfy.Client) {
+func setOccupiedHandler(w http.ResponseWriter, r *http.Request, mongoClient *db.MongoClient, ntfyClient *ntfy.Client) {
 	var req setOccupiedRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -65,7 +64,7 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, mongoClient *mon
 		occupiedStartTime = &startTime
 	} else {
 		endTime := time.Now()
-		db.AddOccupiedMetric(mongoClient, occupiedStartTime, &endTime)
+		mongoClient.AddOccupiedMetric(occupiedStartTime, &endTime)
 		occupiedStartTime = nil
 	}
 
@@ -81,7 +80,7 @@ func setOccupiedHandler(w http.ResponseWriter, r *http.Request, mongoClient *mon
 	)
 }
 
-func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *db.MongoClient) {
 	pageParam := r.URL.Query().Get("page")
 	page, err := strconv.Atoi(pageParam)
 	if err != nil {
@@ -99,7 +98,7 @@ func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cli
 
 	skip := (page - 1) * itemsPerPage
 
-	totalDocuments, err := db.DocumentCount(client)
+	totalDocuments, err := client.DocumentCount()
 	if err != nil {
 		log.Printf("error getting document count: %v\n", err)
 		http.Error(w, "Error getting document count", http.StatusInternalServerError)
@@ -113,7 +112,7 @@ func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cli
 		return
 	}
 
-	metrics, err := db.GetMetrics(client, int64(skip), int64(itemsPerPage))
+	metrics, err := client.GetMetrics(int64(skip), int64(itemsPerPage))
 	if err != nil {
 		log.Printf("Error getting metrics from db: %v\n", err)
 		http.Error(w, "Error getting metrics", http.StatusInternalServerError)
@@ -146,7 +145,7 @@ func getMetricsHandler(w http.ResponseWriter, r *http.Request, client *mongo.Cli
 	)
 }
 
-func clearMetricEndTimeAndDurationHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+func clearMetricEndTimeAndDurationHandler(w http.ResponseWriter, r *http.Request, client *db.MongoClient) {
 	rawMetricId := r.PathValue("id")
 	if len(rawMetricId) == 0 {
 		log.Println("No id in path param")
@@ -161,7 +160,7 @@ func clearMetricEndTimeAndDurationHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	if err := db.ClearMetricEndTimeAndDuration(client, metricId); err != nil {
+	if err := client.ClearMetricEndTimeAndDuration(metricId); err != nil {
 		log.Printf("Error clearing endTime for metric %s: %v\n", metricId, err)
 		http.Error(w, "Error clearing endTime for metric", http.StatusInternalServerError)
 		return
@@ -170,7 +169,7 @@ func clearMetricEndTimeAndDurationHandler(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusOK)
 }
 
-func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.Client) {
+func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *db.MongoClient) {
 	idToDelete := r.PathValue("id")
 	if len(idToDelete) == 0 {
 		log.Println("No id in path param")
@@ -178,7 +177,7 @@ func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.C
 		return
 	}
 
-	_, err := db.DeleteMetric(client, idToDelete)
+	_, err := client.DeleteMetric(idToDelete)
 	if err != nil {
 		log.Printf("Error deleting metric %s: %v\n", idToDelete, err)
 		http.Error(w, "Error deleting metric", http.StatusInternalServerError)
@@ -188,8 +187,8 @@ func deleteMetricHandler(w http.ResponseWriter, r *http.Request, client *mongo.C
 	w.WriteHeader(http.StatusOK)
 }
 
-func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
-	usagesByDay, err := db.UsagesByDay(client)
+func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *db.MongoClient) {
+	usagesByDay, err := client.UsagesByDay()
 	if err != nil {
 		log.Printf("Error getting usages by day: %v\n", err)
 		http.Error(w, "Error getting usages by day", http.StatusInternalServerError)
@@ -209,8 +208,8 @@ func usagesByDayHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Cl
 	)
 }
 
-func getStatsHandler(w http.ResponseWriter, _ *http.Request, client *mongo.Client) {
-	generalMetrics, err := db.CalcStats(client)
+func getStatsHandler(w http.ResponseWriter, _ *http.Request, client *db.MongoClient) {
+	generalMetrics, err := client.CalcStats()
 	if err != nil {
 		log.Printf("error calculating stats: %v\n", err)
 		http.Error(w, "error calculating stats", http.StatusInternalServerError)

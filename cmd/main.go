@@ -15,7 +15,7 @@ const PORT = "PORT"
 const NTFY_BASE_URL = "NTFY_BASE_URL"
 const TOPIC = "NTFY_TOPIC"
 const TOKEN = "NTFY_TOKEN"
-const DEFAULT_TOPIC = "bathroom"
+const DEFAULT_TOPIC = "bathroom_test"
 
 func main() {
 	port, found := os.LookupEnv(PORT)
@@ -23,9 +23,9 @@ func main() {
 		port = "3333" // default port
 	}
 
-	mongoClient, err := db.ConnectMongo()
+	mongoClient, err := db.NewMongoClient()
 	if err != nil {
-		log.Fatalf("Error connecting to MongoDB: %v", err)
+		log.Fatalf("Error creating Mongo client: %v", err)
 	}
 	defer mongoClient.Disconnect(context.Background())
 

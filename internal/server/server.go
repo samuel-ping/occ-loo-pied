@@ -4,18 +4,17 @@ import (
 	"net/http"
 
 	"github.com/samuel-ping/occ-loo-pied/api"
+	"github.com/samuel-ping/occ-loo-pied/internal/db"
 	"github.com/samuel-ping/occ-loo-pied/internal/ntfy"
-
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type Server struct {
 	Router             *http.ServeMux
-	MongoClient        *mongo.Client
+	MongoClient        *db.MongoClient
 	NotificationClient *ntfy.Client
 }
 
-func NewServer(mongoClient *mongo.Client, notificationClient *ntfy.Client) *Server {
+func NewServer(mongoClient *db.MongoClient, notificationClient *ntfy.Client) *Server {
 	server := &Server{
 		Router:             http.NewServeMux(),
 		MongoClient:        mongoClient,

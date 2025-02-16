@@ -3,11 +3,11 @@ package api
 import (
 	"net/http"
 
+	"github.com/samuel-ping/occ-loo-pied/internal/db"
 	"github.com/samuel-ping/occ-loo-pied/internal/ntfy"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
-func SetupRoutes(mux *http.ServeMux, mongoClient *mongo.Client, notificationClient *ntfy.Client) http.Handler {
+func SetupRoutes(mux *http.ServeMux, mongoClient *db.MongoClient, notificationClient *ntfy.Client) http.Handler {
 	mux.HandleFunc("PUT /api/occupied", func(w http.ResponseWriter, r *http.Request) {
 		setOccupiedHandler(w, r, mongoClient, notificationClient)
 	})

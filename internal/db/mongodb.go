@@ -13,25 +13,34 @@ import (
 // For docker compose
 const MONGODB_URI = "mongodb://root:password@db:27017"
 
-// For local development
-// const MONGODB_URI = "mongodb://root:password@localhost:27017"
-
 const DB = "occloopied"
 const COLLECTION = "metrics"
 
-func ConnectMongo() (*mongo.Client, error) {
+type MongoClient struct {
+	client *mongo.Client
+}
+
+func NewMongoClient() (*MongoClient, error) {
 	client, err := mongo.Connect(options.Client().ApplyURI(MONGODB_URI))
 	if err != nil {
 		return nil, err
 	}
 
-	return client, nil
+	mongoClient := &MongoClient{
+		client: client,
+	}
+
+	return mongoClient, nil
 }
 
-func AddOccupiedMetric(client *mongo.Client, startTime *time.Time, endTime *time.Time) error {
+func (m *MongoClient) Disconnect(ctx context.Context) {
+	m.client.Disconnect(ctx)
+}
+
+func (m *MongoClient) AddOccupiedMetric(startTime *time.Time, endTime *time.Time) error {
 	duration := endTime.Sub(*startTime)
 
-	_, err := client.Database(DB).Collection(COLLECTION).InsertOne(
+	_, err := m.client.Database(DB).Collection(COLLECTION).InsertOne(
 		context.Background(),
 		map[string]interface{}{
 			"startTime": startTime,
@@ -46,11 +55,11 @@ func AddOccupiedMetric(client *mongo.Client, startTime *time.Time, endTime *time
 	return nil
 }
 
-func GetMetrics(client *mongo.Client, skip int64, limit int64) ([]Metric, error) {
+func (m *MongoClient) GetMetrics(skip int64, limit int64) ([]Metric, error) {
 	filter := bson.D{}
 	sort := bson.D{{Key: START_TIME_FIELD, Value: -1}}
 	opts := options.Find().SetSkip(skip).SetLimit(limit).SetSort(sort)
-	cursor, err := client.Database(DB).Collection(COLLECTION).Find(context.Background(), filter, opts)
+	cursor, err := m.client.Database(DB).Collection(COLLECTION).Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -63,9 +72,9 @@ func GetMetrics(client *mongo.Client, skip int64, limit int64) ([]Metric, error)
 	return metrics, nil
 }
 
-func ClearMetricEndTimeAndDuration(client *mongo.Client, id bson.ObjectID) error {
+func (m *MongoClient) ClearMetricEndTimeAndDuration(id bson.ObjectID) error {
 	update := bson.D{{Key: UNSET, Value: bson.D{{Key: END_TIME_FIELD, Value: ""}, {Key: DURATION_FIELD, Value: ""}}}}
-	_, err := client.Database(DB).Collection(COLLECTION).UpdateByID(context.Background(), id, update)
+	_, err := m.client.Database(DB).Collection(COLLECTION).UpdateByID(context.Background(), id, update)
 	if err != nil {
 		return err
 	}
@@ -73,14 +82,14 @@ func ClearMetricEndTimeAndDuration(client *mongo.Client, id bson.ObjectID) error
 	return nil
 }
 
-func DeleteMetric(client *mongo.Client, id string) (bool, error) {
+func (m *MongoClient) DeleteMetric(id string) (bool, error) {
 	objectId, err := bson.ObjectIDFromHex(id)
 	if err != nil {
 		log.Printf("error converting id to objectId: %v\n", err)
 	}
 
 	filter := bson.D{{Key: ID_FIELD, Value: objectId}}
-	res, err := client.Database(DB).Collection(COLLECTION).DeleteOne(context.Background(), filter)
+	res, err := m.client.Database(DB).Collection(COLLECTION).DeleteOne(context.Background(), filter)
 	if err != nil {
 		return false, err
 	}
@@ -91,8 +100,8 @@ func DeleteMetric(client *mongo.Client, id string) (bool, error) {
 	return true, nil
 }
 
-func DocumentCount(client *mongo.Client) (int64, error) {
-	res, err := client.Database(DB).Collection(COLLECTION).CountDocuments(context.Background(), bson.D{})
+func (m *MongoClient) DocumentCount() (int64, error) {
+	res, err := m.client.Database(DB).Collection(COLLECTION).CountDocuments(context.Background(), bson.D{})
 	if err != nil {
 		return -1, err
 	}
@@ -100,7 +109,7 @@ func DocumentCount(client *mongo.Client) (int64, error) {
 	return res, nil
 }
 
-func UsagesByDay(client *mongo.Client) ([]UsagesByDayMetric, error) {
+func (m *MongoClient) UsagesByDay() ([]UsagesByDayMetric, error) {
 	groupStage := bson.D{
 		{Key: GROUP, Value: bson.D{
 			{Key: ID_FIELD, Value: bson.D{
@@ -115,7 +124,7 @@ func UsagesByDay(client *mongo.Client) ([]UsagesByDayMetric, error) {
 		}},
 	}
 
-	cursor, err := client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{groupStage})
+	cursor, err := m.client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{groupStage})
 	if err != nil {
 		return nil, err
 	}
@@ -128,10 +137,10 @@ func UsagesByDay(client *mongo.Client) ([]UsagesByDayMetric, error) {
 	return usagesByDay, nil
 }
 
-func CalcStats(client *mongo.Client) (Stats, error) {
+func (m *MongoClient) CalcStats() (Stats, error) {
 	var stats Stats
 
-	totalUsages, err := DocumentCount(client)
+	totalUsages, err := m.DocumentCount()
 	if err != nil {
 		return stats, err
 	}
@@ -160,7 +169,7 @@ func CalcStats(client *mongo.Client) (Stats, error) {
 		}},
 	}
 
-	cursor, err := client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{facetStage, projectStage})
+	cursor, err := m.client.Database(DB).Collection(COLLECTION).Aggregate(context.Background(), mongo.Pipeline{facetStage, projectStage})
 	if err != nil {
 		return stats, err
 	}
