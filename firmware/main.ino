@@ -16,7 +16,7 @@ const int BRIGHTNESS = 2; // (255 max)
 static unsigned long builtinLedLastToggle = 0;
 
 const int DELAY = 100;
-ApiClient apiClient;
+ApiClient apiClient(API_URL);
 
 int touchState = 0;  // if TTP223 is on
 bool occupied = false;
@@ -47,20 +47,23 @@ void loop() {
         occupied = false;
       }
     }
+
+    // Update LED ring based on status
+    if (occupied) {
+      strip.fill(COLOR_RED, 0, NUM_PIXELS);
+    } else {
+      strip.fill(COLOR_GREEN, 0, NUM_PIXELS);
+    }
+    strip.show();
+
+    delay(DELAY);
   } else {
     Serial.println("Wifi disconnected");
+    digitalWrite(LED_BUILTIN, LOW);
+    strip.clear();
+    
     connectToWifi();
   }
-
-  // Update LED ring based on status
-  if (occupied) {
-    strip.fill(COLOR_RED, 0, NUM_PIXELS);
-  } else {
-    strip.fill(COLOR_GREEN, 0, NUM_PIXELS);
-  }
-  strip.show();
-
-  delay(DELAY);
 }
 
 void connectToWifi() {

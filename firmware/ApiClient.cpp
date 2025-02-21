@@ -4,11 +4,11 @@
 
 #include "ApiClient.h"
 
-const char* API_URL = "http://bath.room/occupied";
-
 HTTPClient http;
 
-ApiClient::ApiClient() {}
+ApiClient::ApiClient(const char* u) {
+  apiUrl = u;
+}
 
 bool ApiClient::isOccupied() {
   String payload = getOccupiedRequest();
@@ -26,7 +26,7 @@ bool ApiClient::isOccupied() {
 
 String ApiClient::getOccupiedRequest() {
   WiFiClient client;
-  http.begin(client, API_URL);
+  http.begin(client, apiUrl);
   
   int httpResponseCode = http.GET();
   Serial.print("GET response code: ");
@@ -46,7 +46,7 @@ void ApiClient::setOccupiedRequest(bool occupied) {
   serializeJson(doc, payload);
 
   WiFiClient client;
-  http.begin(client, API_URL);
+  http.begin(client, apiUrl);
 
   http.addHeader("Content-Type", "text/json");
 

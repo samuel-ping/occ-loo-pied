@@ -2,8 +2,10 @@
 #define ApiClient_h
 
 class ApiClient {
+  const char* apiUrl;
+
   public:
-    ApiClient();
+    ApiClient(const char*);
     bool isOccupied();
     void setOccupiedRequest(bool occupied);
   private:
